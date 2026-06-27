@@ -4,13 +4,13 @@
 
 const GESTURE_ICONS = {
   'L': '←', 'R': '→', 'U': '↑', 'D': '↓',
-  'UR': '↑→', 'DR': '↓→', 'LR': '←→', 'UD': '↑↓',
+  'UR': '↑→', 'DR': '↓→', 'RU': '→↑', 'RD': '→↓', 'LR': '←→', 'UD': '↑↓',
   'UL': '↑←', 'DL': '↓←', 'RL': '→←', 'DU': '↓↑',
 };
 
 const GESTURE_NAMES = {
   'L': '왼쪽', 'R': '오른쪽', 'U': '위', 'D': '아래',
-  'UR': '위 → 오른쪽', 'DR': '아래 → 오른쪽', 'LR': '왼쪽 → 오른쪽', 'UD': '위 → 아래',
+  'UR': '위 → 오른쪽', 'DR': '아래 → 오른쪽', 'RU': '오른쪽 → 위', 'RD': '오른쪽 → 아래', 'LR': '왼쪽 → 오른쪽', 'UD': '위 → 아래',
   'UL': '위 → 왼쪽', 'DL': '아래 → 왼쪽', 'RL': '오른쪽 → 왼쪽', 'DU': '아래 → 위',
 };
 
@@ -19,6 +19,8 @@ const ACTIONS = [
   { value: 'forward',     label: '앞으로가기' },
   { value: 'scrollTop',   label: '맨 위로 스크롤' },
   { value: 'scrollBottom', label: '맨 아래로 스크롤' },
+  { value: 'scrollUp',    label: '위로 스크롤' },
+  { value: 'scrollDown',  label: '아래로 스크롤' },
   { value: 'closeTab',    label: '탭 닫기' },
   { value: 'newTab',      label: '새 탭 열기' },
   { value: 'restoreTab',  label: '닫은 탭 복원' },
@@ -35,10 +37,12 @@ const ACTIONS = [
 const DEFAULT_MAP = {
   'L':  'back',
   'R':  'forward',
-  'U':  'scrollTop',
-  'D':  'scrollBottom',
+  'U':  'scrollUp',
+  'D':  'scrollDown',
   'UR': 'closeTab',
   'DR': 'newTab',
+  'RU': 'nextTab',
+  'RD': 'prevTab',
   'LR': 'restoreTab',
   'UD': 'reload',
   'UL': 'pinTab',
@@ -54,7 +58,7 @@ function renderGestureList() {
   const list = document.getElementById('gesture-list');
   list.innerHTML = '';
 
-  const orderedKeys = ['L', 'R', 'U', 'D', 'UR', 'DR', 'LR', 'UD', 'UL', 'DL', 'RL', 'DU'];
+  const orderedKeys = ['L', 'R', 'U', 'D', 'UR', 'DR', 'RU', 'RD', 'LR', 'UD', 'UL', 'DL', 'RL', 'DU'];
 
   for (const key of orderedKeys) {
     const row = document.createElement('div');
@@ -92,23 +96,37 @@ function loadSettings() {
     }
     renderGestureList();
 
-    if (result.settings) {
-      const s = result.settings;
-      if (s.trailColor) {
-        // rgba를 hex로 변환
-        const hex = rgbaToHex(s.trailColor);
-        document.getElementById('trail-color').value = hex;
-        document.getElementById('color-value').textContent = hex;
-      }
-      if (s.trailWidth) {
-        document.getElementById('trail-width').value = s.trailWidth;
-        document.getElementById('width-value').textContent = s.trailWidth + 'px';
-      }
-      if (s.sensitivity) {
-        document.getElementById('sensitivity').value = s.sensitivity;
-        document.getElementById('sensitivity-value').textContent = s.sensitivity + 'px';
-      }
+    const s = result.settings || {};
+    if (s.trailColor) {
+      // rgba를 hex로 변환
+      const hex = rgbaToHex(s.trailColor);
+      document.getElementById('trail-color').value = hex;
+      document.getElementById('color-value').textContent = hex;
     }
+    if (s.trailWidth) {
+      document.getElementById('trail-width').value = s.trailWidth;
+      document.getElementById('width-value').textContent = s.trailWidth + 'px';
+    }
+    if (s.sensitivity) {
+      document.getElementById('sensitivity').value = s.sensitivity;
+      document.getElementById('sensitivity-value').textContent = s.sensitivity + 'px';
+    }
+    if (s.scrollDistance) {
+      document.getElementById('scroll-distance').value = s.scrollDistance;
+      document.getElementById('scroll-distance-value').textContent = s.scrollDistance + 'px';
+    } else {
+      document.getElementById('scroll-distance').value = 300;
+      document.getElementById('scroll-distance-value').textContent = '300px';
+    }
+    if (s.scrollDuration !== undefined) {
+      document.getElementById('scroll-duration').value = s.scrollDuration;
+      document.getElementById('scroll-duration-value').textContent = s.scrollDuration + 'ms';
+    } else {
+      document.getElementById('scroll-duration').value = 150;
+      document.getElementById('scroll-duration-value').textContent = '150ms';
+    }
+    document.getElementById('show-hint').checked = s.showHint !== undefined ? s.showHint : false;
+    document.getElementById('show-overlay').checked = s.showOverlay !== undefined ? s.showOverlay : false;
   });
 }
 
@@ -117,6 +135,10 @@ function saveSettings() {
   const colorHex = document.getElementById('trail-color').value;
   const trailWidth = parseInt(document.getElementById('trail-width').value);
   const sensitivity = parseInt(document.getElementById('sensitivity').value);
+  const scrollDistance = parseInt(document.getElementById('scroll-distance').value);
+  const scrollDuration = parseInt(document.getElementById('scroll-duration').value);
+  const showHint = document.getElementById('show-hint').checked;
+  const showOverlay = document.getElementById('show-overlay').checked;
 
   // hex를 rgba로 변환
   const r = parseInt(colorHex.slice(1, 3), 16);
@@ -126,7 +148,7 @@ function saveSettings() {
 
   chrome.storage.sync.set({
     gestureMap: currentMap,
-    settings: { trailColor, trailWidth, sensitivity }
+    settings: { trailColor, trailWidth, sensitivity, scrollDistance, scrollDuration, showHint, showOverlay }
   }, () => {
     showToast('설정이 저장되었습니다.');
   });
@@ -141,6 +163,12 @@ function resetSettings() {
   document.getElementById('width-value').textContent = '3px';
   document.getElementById('sensitivity').value = 20;
   document.getElementById('sensitivity-value').textContent = '20px';
+  document.getElementById('scroll-distance').value = 300;
+  document.getElementById('scroll-distance-value').textContent = '300px';
+  document.getElementById('scroll-duration').value = 150;
+  document.getElementById('scroll-duration-value').textContent = '150ms';
+  document.getElementById('show-hint').checked = false;
+  document.getElementById('show-overlay').checked = false;
   renderGestureList();
   showToast('설정이 초기화되었습니다.');
 }
@@ -150,6 +178,10 @@ function exportSettings() {
   const colorHex = document.getElementById('trail-color').value;
   const trailWidth = parseInt(document.getElementById('trail-width').value);
   const sensitivity = parseInt(document.getElementById('sensitivity').value);
+  const scrollDistance = parseInt(document.getElementById('scroll-distance').value);
+  const scrollDuration = parseInt(document.getElementById('scroll-duration').value);
+  const showHint = document.getElementById('show-hint').checked;
+  const showOverlay = document.getElementById('show-overlay').checked;
 
   const r = parseInt(colorHex.slice(1, 3), 16);
   const g = parseInt(colorHex.slice(3, 5), 16);
@@ -158,7 +190,7 @@ function exportSettings() {
 
   const data = {
     gestureMap: currentMap,
-    settings: { trailColor, trailWidth, sensitivity }
+    settings: { trailColor, trailWidth, sensitivity, scrollDistance, scrollDuration, showHint, showOverlay }
   };
 
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -195,6 +227,16 @@ function importSettings(file) {
           document.getElementById('sensitivity').value = s.sensitivity;
           document.getElementById('sensitivity-value').textContent = s.sensitivity + 'px';
         }
+        if (s.scrollDistance) {
+          document.getElementById('scroll-distance').value = s.scrollDistance;
+          document.getElementById('scroll-distance-value').textContent = s.scrollDistance + 'px';
+        }
+        if (s.scrollDuration) {
+          document.getElementById('scroll-duration').value = s.scrollDuration;
+          document.getElementById('scroll-duration-value').textContent = s.scrollDuration + 'ms';
+        }
+        document.getElementById('show-hint').checked = s.showHint !== undefined ? s.showHint : false;
+        document.getElementById('show-overlay').checked = s.showOverlay !== undefined ? s.showOverlay : false;
       }
       showToast('설정을 가져왔습니다. 저장 버튼을 눌러 적용하세요.');
     } catch (err) {
@@ -257,6 +299,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('sensitivity').addEventListener('input', (e) => {
     document.getElementById('sensitivity-value').textContent = e.target.value + 'px';
+  });
+  document.getElementById('scroll-distance').addEventListener('input', (e) => {
+    document.getElementById('scroll-distance-value').textContent = e.target.value + 'px';
+  });
+  document.getElementById('scroll-duration').addEventListener('input', (e) => {
+    document.getElementById('scroll-duration-value').textContent = e.target.value + 'ms';
   });
 
   // 색상 피커 값 표시

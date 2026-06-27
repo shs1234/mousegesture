@@ -20,10 +20,12 @@
   const DEFAULT_GESTURES = {
     'L':  { action: 'back',          label: '뒤로가기',         icon: '←' },
     'R':  { action: 'forward',       label: '앞으로가기',       icon: '→' },
-    'U':  { action: 'scrollTop',     label: '맨 위로',         icon: '↑' },
-    'D':  { action: 'scrollBottom',  label: '맨 아래로',       icon: '↓' },
+    'U':  { action: 'scrollUp',      label: '위로 스크롤',     icon: '↑' },
+    'D':  { action: 'scrollDown',    label: '아래로 스크롤',   icon: '↓' },
     'UR': { action: 'closeTab',      label: '탭 닫기',         icon: '↑→' },
     'DR': { action: 'newTab',        label: '새 탭',           icon: '↓→' },
+    'RU': { action: 'nextTab',       label: '다음 탭',         icon: '→↑' },
+    'RD': { action: 'prevTab',       label: '이전 탭',         icon: '→↓' },
     'LR': { action: 'restoreTab',    label: '탭 복원',         icon: '←→' },
     'UD': { action: 'reload',        label: '새로고침',        icon: '↑↓' },
     'UL': { action: 'pinTab',        label: '탭 고정/해제',    icon: '↑←' },
@@ -49,6 +51,31 @@
     trailColor: TRAIL_COLOR,
     trailWidth: TRAIL_WIDTH,
     sensitivity: SAMPLE_DISTANCE,
+    showHint: false,
+    showOverlay: false,
+    scrollDistance: 300,
+    scrollDuration: 150,
+  };
+
+  // ── 액션 라벨 매핑 ─────────────────────────────────
+  const ACTION_LABELS = {
+    'back': '뒤로가기',
+    'forward': '앞으로가기',
+    'scrollTop': '맨 위로 스크롤',
+    'scrollBottom': '맨 아래로 스크롤',
+    'scrollUp': '위로 스크롤',
+    'scrollDown': '아래로 스크롤',
+    'closeTab': '탭 닫기',
+    'newTab': '새 탭 열기',
+    'restoreTab': '닫은 탭 복원',
+    'reload': '새로고침',
+    'hardReload': '강력 새로고침 (캐시 무시)',
+    'pinTab': '탭 고정/해제',
+    'duplicateTab': '탭 복제',
+    'muteTab': '탭 음소거/해제',
+    'nextTab': '다음 탭',
+    'prevTab': '이전 탭',
+    'none': '(사용 안 함)'
   };
 
   // ── 설정 로드 ─────────────────────────────────────
@@ -57,13 +84,14 @@
       chrome.storage.sync.get(['enabled', 'gestureMap', 'settings'], (result) => {
         if (result.enabled !== undefined) enabled = result.enabled;
         if (result.gestureMap) {
-          // gestureMap에는 action 문자열만 저장되어 있으므로 DEFAULT_GESTURES와 병합
           const savedMap = result.gestureMap;
           for (const key in savedMap) {
-            if (DEFAULT_GESTURES[key]) {
-              gestureMap[key] = { ...DEFAULT_GESTURES[key], action: savedMap[key] };
-            } else if (savedMap[key] && typeof savedMap[key] === 'object') {
-              gestureMap[key] = savedMap[key];
+            const action = savedMap[key];
+            if (action) {
+              const defaultGesture = DEFAULT_GESTURES[key];
+              const icon = defaultGesture ? defaultGesture.icon : key;
+              const label = ACTION_LABELS[action] || action;
+              gestureMap[key] = { action, label, icon };
             }
           }
         }
@@ -83,8 +111,12 @@
       if (changes.gestureMap) {
         const savedMap = changes.gestureMap.newValue;
         for (const key in savedMap) {
-          if (DEFAULT_GESTURES[key]) {
-            gestureMap[key] = { ...DEFAULT_GESTURES[key], action: savedMap[key] };
+          const action = savedMap[key];
+          if (action) {
+            const defaultGesture = DEFAULT_GESTURES[key];
+            const icon = defaultGesture ? defaultGesture.icon : key;
+            const label = ACTION_LABELS[action] || action;
+            gestureMap[key] = { action, label, icon };
           }
         }
       }
@@ -170,8 +202,12 @@
     const gestureStr = directions.join('');
     if (gestureStr && gestureMap[gestureStr]) {
       const gesture = gestureMap[gestureStr];
-      const lastPoint = points[points.length - 1];
-      drawGestureHint(gesture, lastPoint.x, lastPoint.y);
+      if (gesture.action !== 'none') {
+        const lastPoint = points[points.length - 1];
+        if (settings.showHint) {
+          drawGestureHint(gesture, lastPoint.x, lastPoint.y);
+        }
+      }
     }
   }
 
@@ -233,6 +269,70 @@
     }
   }
 
+  // ── 커스텀 스크롤 애니메이션 ────────────────────────
+  let scrollAnimationId = null;
+
+  function performScroll(distance) {
+    const duration = settings.scrollDuration !== undefined ? settings.scrollDuration : 150;
+    
+    if (duration <= 0) {
+      window.scrollBy(0, distance);
+      return;
+    }
+
+    const startY = window.scrollY;
+    const bodyHeight = document.body ? document.body.scrollHeight : 0;
+    const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight, bodyHeight - window.innerHeight);
+    const targetY = Math.max(0, Math.min(maxScroll, startY + distance));
+    
+    animateScroll(startY, targetY, duration);
+  }
+
+  function performScrollTo(targetY) {
+    const duration = settings.scrollDuration !== undefined ? settings.scrollDuration : 150;
+    
+    if (duration <= 0) {
+      window.scrollTo(0, targetY);
+      return;
+    }
+
+    const startY = window.scrollY;
+    const bodyHeight = document.body ? document.body.scrollHeight : 0;
+    const maxScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight, bodyHeight - window.innerHeight);
+    const finalTargetY = Math.max(0, Math.min(maxScroll, targetY));
+    
+    animateScroll(startY, finalTargetY, duration);
+  }
+
+  function animateScroll(startY, targetY, duration) {
+    if (scrollAnimationId) {
+      cancelAnimationFrame(scrollAnimationId);
+    }
+
+    const difference = targetY - startY;
+    if (difference === 0) return;
+
+    const startTime = performance.now();
+
+    function step(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      // easeOutCubic: fast start, decelerating smoothly
+      const ease = 1 - Math.pow(1 - progress, 3);
+
+      window.scrollTo(0, startY + difference * ease);
+
+      if (progress < 1) {
+        scrollAnimationId = requestAnimationFrame(step);
+      } else {
+        scrollAnimationId = null;
+      }
+    }
+
+    scrollAnimationId = requestAnimationFrame(step);
+  }
+
   // ── 제스처 실행 ───────────────────────────────────
   function executeGesture(gestureStr) {
     const gesture = gestureMap[gestureStr];
@@ -249,10 +349,16 @@
         history.forward();
         return true;
       case 'scrollTop':
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        performScrollTo(0);
         return true;
       case 'scrollBottom':
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        performScrollTo(document.documentElement.scrollHeight);
+        return true;
+      case 'scrollUp':
+        performScroll(-(settings.scrollDistance || 300));
+        return true;
+      case 'scrollDown':
+        performScroll(settings.scrollDistance || 300);
         return true;
       case 'reload':
         location.reload();
@@ -357,14 +463,15 @@
     const dy = e.clientY - lastY;
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    if (distance < (settings.sensitivity || SAMPLE_DISTANCE)) return;
+    if (distance < (settings.sensitivity !== undefined ? settings.sensitivity : SAMPLE_DISTANCE)) return;
 
     // 첫 번째 유효 움직임에서 Canvas 생성
     if (!gestureStarted) {
       const totalDx = e.clientX - startX;
       const totalDy = e.clientY - startY;
       const totalDist = Math.sqrt(totalDx * totalDx + totalDy * totalDy);
-      if (totalDist < MIN_GESTURE_DISTANCE) return;
+      const minGestureDist = Math.max(5, (settings.sensitivity !== undefined ? settings.sensitivity : SAMPLE_DISTANCE) * 1.5);
+      if (totalDist < minGestureDist) return;
 
       gestureStarted = true;
       createCanvas();
@@ -386,19 +493,34 @@
 
     isGesturing = false;
 
+    // 마우스가 클릭 시작점으로부터 움직였는지 판별
+    const totalDx = e.clientX - startX;
+    const totalDy = e.clientY - startY;
+    const totalDist = Math.sqrt(totalDx * totalDx + totalDy * totalDy);
+    
+    // 움직임 감도 또는 최소 5px 이상 움직였다면 컨텍스트 메뉴 억제
+    const dragThreshold = Math.max(5, settings.sensitivity !== undefined ? settings.sensitivity : SAMPLE_DISTANCE);
+    if (totalDist > dragThreshold) {
+      suppressContextMenu = true;
+      // 짧은 시간 후 플래그 해제 (contextmenu 이벤트가 mouseup 직후 발생)
+      setTimeout(() => { suppressContextMenu = false; }, 100);
+    }
+
     if (gestureStarted) {
       const gestureStr = directions.join('');
 
       if (gestureStr && gestureMap[gestureStr]) {
-        showResultOverlay(gestureMap[gestureStr]);
-        executeGesture(gestureStr);
+        const gesture = gestureMap[gestureStr];
+        if (gesture.action !== 'none') {
+          if (settings.showOverlay) {
+            showResultOverlay(gesture);
+          }
+          executeGesture(gestureStr);
+        }
       }
 
       removeCanvas();
-      suppressContextMenu = true;
       gestureStarted = false;
-      // 짧은 시간 후 플래그 해제 (contextmenu 이벤트가 mouseup 직후 발생)
-      setTimeout(() => { suppressContextMenu = false; }, 100);
     }
 
     points = [];

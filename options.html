@@ -44,11 +44,11 @@
         </div>
       </section>
 
-      <!-- 트레일 설정 섹션 -->
+      <!-- 트레일 및 안내 설정 섹션 -->
       <section class="card">
         <div class="card-header">
-          <h2>트레일 설정</h2>
-          <p class="card-desc">마우스 제스처 궤적의 시각적 설정을 변경합니다.</p>
+          <h2>트레일 및 안내 설정</h2>
+          <p class="card-desc">마우스 제스처 궤적과 안내 문구 설정을 변경합니다.</p>
         </div>
         <div class="card-body">
           <div class="setting-row">
@@ -77,9 +77,49 @@
               <p class="setting-desc">값이 작을수록 작은 움직임도 감지합니다.</p>
             </div>
             <div class="slider-wrapper">
-              <input type="range" id="sensitivity" min="10" max="50" value="20" class="slider">
+              <input type="range" id="sensitivity" min="1" max="50" value="20" class="slider">
               <span class="slider-value" id="sensitivity-value">20px</span>
             </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <label class="setting-label">스크롤 이동 거리</label>
+              <p class="setting-desc">위/아래 스크롤 제스처 시 이동할 거리를 조절합니다.</p>
+            </div>
+            <div class="slider-wrapper">
+              <input type="range" id="scroll-distance" min="50" max="1000" step="50" value="300" class="slider">
+              <span class="slider-value" id="scroll-distance-value">300px</span>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <label class="setting-label">스크롤 애니메이션 시간</label>
+              <p class="setting-desc">스크롤 이동 시 소요되는 애니메이션 시간(ms)을 조절합니다 (0ms는 즉시 이동).</p>
+            </div>
+            <div class="slider-wrapper">
+              <input type="range" id="scroll-duration" min="0" max="500" step="50" value="150" class="slider">
+              <span class="slider-value" id="scroll-duration-value">150ms</span>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <label class="setting-label">제스처 완료 오버레이 표시</label>
+              <p class="setting-desc">제스처 실행 완료 시 화면 중앙에 동작 안내를 표시합니다.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="show-overlay">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <label class="setting-label">실시간 제스처 힌트 표시</label>
+              <p class="setting-desc">마우스 드래그 중 커서 근처에 인식 중인 제스처 정보를 표시합니다.</p>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="show-hint">
+              <span class="toggle-slider"></span>
+            </label>
           </div>
         </div>
       </section>

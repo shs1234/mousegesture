@@ -77,10 +77,12 @@ chrome.runtime.onInstalled.addListener((details) => {
       gestureMap: {
         'L':  'back',
         'R':  'forward',
-        'U':  'scrollTop',
-        'D':  'scrollBottom',
+        'U':  'scrollUp',
+        'D':  'scrollDown',
         'UR': 'closeTab',
         'DR': 'newTab',
+        'RU': 'nextTab',
+        'RD': 'prevTab',
         'LR': 'restoreTab',
         'UD': 'reload',
         'UL': 'pinTab',
@@ -92,6 +94,10 @@ chrome.runtime.onInstalled.addListener((details) => {
         trailColor: 'rgba(66, 133, 244, 0.7)',
         trailWidth: 3,
         sensitivity: 20,
+        showHint: false,
+        showOverlay: false,
+        scrollDistance: 300,
+        scrollDuration: 150,
       }
     });
   }
