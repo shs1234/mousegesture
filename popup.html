@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mouse Gesture</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup">
+    <header class="popup-header">
+      <div class="logo">
+        <img src="icons/icon48.png" alt="Mouse Gesture" width="28" height="28">
+        <h1>Mouse Gesture</h1>
+      </div>
+      <label class="toggle-switch" id="toggle-container">
+        <input type="checkbox" id="toggle-enabled" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </header>
+
+    <div class="status-bar" id="status-bar">
+      <span class="status-dot active" id="status-dot"></span>
+      <span class="status-text" id="status-text">활성화됨</span>
+    </div>
+
+    <section class="gesture-guide">
+      <h2>제스처 가이드</h2>
+      <div class="gesture-grid" id="gesture-grid">
+        <!-- JS에서 동적 생성 -->
+      </div>
+    </section>
+
+    <footer class="popup-footer">
+      <a href="#" id="open-options" class="options-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+        </svg>
+        설정
+      </a>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

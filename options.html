@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mouse Gesture — 설정</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-inner">
+        <div class="header-title">
+          <img src="icons/icon48.png" alt="Mouse Gesture" width="36" height="36">
+          <div>
+            <h1>Mouse Gesture</h1>
+            <p class="subtitle">마우스 제스처 설정</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-ghost" id="btn-reset">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            초기화
+          </button>
+          <button class="btn btn-primary" id="btn-save">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            저장
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- 제스처 매핑 섹션 -->
+      <section class="card">
+        <div class="card-header">
+          <h2>제스처 매핑</h2>
+          <p class="card-desc">각 제스처에 실행할 동작을 설정합니다.</p>
+        </div>
+        <div class="card-body">
+          <div class="gesture-list" id="gesture-list">
+            <!-- JS에서 동적 생성 -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 트레일 설정 섹션 -->
+      <section class="card">
+        <div class="card-header">
+          <h2>트레일 설정</h2>
+          <p class="card-desc">마우스 제스처 궤적의 시각적 설정을 변경합니다.</p>
+        </div>
+        <div class="card-body">
+          <div class="setting-row">
+            <div class="setting-info">
+              <label class="setting-label">트레일 색상</label>
+              <p class="setting-desc">제스처 궤적 색상을 선택하세요.</p>
+            </div>
+            <div class="color-picker-wrapper">
+              <input type="color" id="trail-color" value="#4285f4" class="color-picker">
+              <span class="color-value" id="color-value">#4285f4</span>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <label class="setting-label">트레일 굵기</label>
+              <p class="setting-desc">궤적 선의 두께를 조절합니다.</p>
+            </div>
+            <div class="slider-wrapper">
+              <input type="range" id="trail-width" min="1" max="8" value="3" class="slider">
+              <span class="slider-value" id="width-value">3px</span>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <label class="setting-label">민감도</label>
+              <p class="setting-desc">값이 작을수록 작은 움직임도 감지합니다.</p>
+            </div>
+            <div class="slider-wrapper">
+              <input type="range" id="sensitivity" min="10" max="50" value="20" class="slider">
+              <span class="slider-value" id="sensitivity-value">20px</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 데이터 관리 -->
+      <section class="card">
+        <div class="card-header">
+          <h2>데이터 관리</h2>
+          <p class="card-desc">설정을 내보내거나 가져옵니다.</p>
+        </div>
+        <div class="card-body">
+          <div class="data-actions">
+            <button class="btn btn-outline" id="btn-export">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              설정 내보내기
+            </button>
+            <button class="btn btn-outline" id="btn-import">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              설정 가져오기
+            </button>
+            <input type="file" id="import-file" accept=".json" hidden>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- 저장 완료 토스트 -->
+    <div class="toast" id="toast">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <span id="toast-message">설정이 저장되었습니다.</span>
+    </div>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>
